@@ -377,8 +377,9 @@
     transition: max-height 0.4s ease, padding 0.3s;
   }
   .section-body.open {
-    max-height: 3000px;
-    padding: 0 20px 20px;
+    max-height: 8000px;
+    padding: 16px 20px 22px;
+    border-top: 1px solid var(--border2);
   }
   .section-content {
     font-size: 13px; line-height: 1.8; color: var(--text-dim);
@@ -386,6 +387,76 @@
     background: var(--bg); border-radius: 8px;
     padding: 16px; border: 1px solid var(--border2);
     overflow-x: auto;
+  }
+
+  /* ─────────── REPORT BODY (formatted) ─────────── */
+  .rb { font-size: 13.5px; line-height: 1.65; color: var(--text); }
+  .rb > *:first-child { margin-top: 0; }
+  .rb > *:last-child { margin-bottom: 0; }
+
+  .rb-h {
+    font-size: 11.5px; font-weight: 800; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--blue);
+    margin: 22px 0 12px; padding-bottom: 7px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rb-sub {
+    font-size: 13.5px; font-weight: 700; color: var(--text);
+    margin: 16px 0 7px;
+  }
+  .rb-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--teal);
+    margin: 12px 0 5px;
+  }
+  .rb-p { color: var(--text-dim); margin: 9px 0; }
+
+  /* lists */
+  .rb-list { list-style: none; margin: 8px 0 12px; padding: 0; }
+  .rb-li { position: relative; padding-left: 20px; margin: 6px 0; color: var(--text-dim); }
+  .rb-ul .rb-li::before {
+    content: ''; position: absolute; left: 5px; top: 9px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--blue);
+  }
+  .rb-li-sub { padding-left: 36px; }
+  .rb-ul .rb-li-sub::before { left: 21px; background: var(--text-faint); }
+  .rb-ol { counter-reset: rb-counter; }
+  .rb-ol .rb-li { padding-left: 28px; }
+  .rb-ol .rb-li::before {
+    counter-increment: rb-counter; content: counter(rb-counter);
+    position: absolute; left: 0; top: 1px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--blue-glow); color: var(--blue);
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* key / value rows */
+  .rb-kv {
+    display: flex; gap: 12px; margin: 0;
+    padding: 7px 0; border-bottom: 1px solid var(--border2);
+  }
+  .rb-kv + .rb-h, .rb-kv + .rb-sub, .rb-kv + .rb-label { border-top: none; }
+  .rb-k {
+    flex-shrink: 0; min-width: 132px; max-width: 152px;
+    font-weight: 600; color: var(--text); font-size: 12.5px;
+  }
+  .rb-v { color: var(--text-dim); flex: 1; }
+  .rb-kv-sub { margin-left: 18px; padding: 4px 0; border-bottom: none; }
+  .rb-kv-sub .rb-k { min-width: 108px; color: var(--text-dim); font-weight: 500; }
+
+  .rb-div { border: none; border-top: 1px solid var(--border2); margin: 18px 0; }
+
+  .rb-score {
+    font-weight: 700; color: var(--gold);
+    background: rgba(245,158,11,0.1); border-radius: 4px;
+    padding: 1px 6px; font-size: 12px;
+  }
+  .rb-empty { color: var(--text-faint); font-style: italic; }
+
+  @media (max-width: 600px) {
+    .rb-kv { flex-direction: column; gap: 2px; padding: 8px 0; }
+    .rb-k { min-width: 0; max-width: none; }
   }
 
   /* ─────────── IMPROVEMENT PANEL ─────────── */
@@ -911,7 +982,7 @@ function showReport(result) {
           <div class="section-toggle" id="tog-${i}">⌄</div>
         </div>
         <div class="section-body" id="sec-${i}">
-          <div class="section-content">${escHtml(content)}</div>
+          <div class="rb">${formatReport(content)}</div>
         </div>
       </div>
     `;
@@ -960,7 +1031,7 @@ async function submitImprovement() {
     const panel = document.getElementById('improvement-panel');
     panel.innerHTML = `
       <h3 style="color:var(--green);margin-bottom:10px">📈 Progress Assessment</h3>
-      <div class="section-content">${escHtml(data.assessment)}</div>
+      <div class="rb">${formatReport(data.assessment)}</div>
     `;
   } catch (e) {
     showToast('Error submitting improvement');
@@ -1049,6 +1120,117 @@ function copyReportLink() {
 function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─────────── REPORT FORMATTER ───────────
+// Turns the agents' structured plain-text into clean, readable HTML.
+// Conventions it understands:
+//   ALL-CAPS lines            → major heading
+//   "ALLCAPS — Title" lines   → major heading
+//   short Title Case lines    → sub-heading
+//   "Key: value" lines        → key/value row (scores highlighted)
+//   "Key:" alone              → mini label
+//   "- " / "* " / "• "        → bulleted list (nested when indented)
+//   "1. " / "2) "             → numbered list (or heading if body is ALL-CAPS)
+//   "---" / "==="             → divider
+function isAllCaps(s) {
+  const letters = s.replace(/[^A-Za-z]/g, '');
+  return letters.length >= 2 && letters === letters.toUpperCase();
+}
+
+function isHeadingLine(s) {
+  // A heading either is fully ALL-CAPS, or starts with an ALL-CAPS phrase
+  // before a separator (— or "(") — e.g. "30-DAY SPRINT — Validate the Idea".
+  if (isAllCaps(s)) return true;
+  const head = s.split(/[—–(]/)[0].trim();
+  return head.length >= 2 && head.split(/\s+/).length <= 6 && isAllCaps(head);
+}
+
+function inlineFmt(s) {
+  let t = escHtml(s);
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/(\b\d{1,2}(?:\.\d)?\/10\b)/g, '<span class="rb-score">$1</span>');
+  return t;
+}
+
+function formatReport(raw) {
+  if (!raw || !String(raw).trim()) return '<p class="rb-p rb-empty">— No data —</p>';
+
+  const lines = String(raw).replace(/\r/g, '').split('\n');
+  let html = '';
+  let listType = null; // 'ul' | 'ol'
+
+  const closeList = () => { if (listType) { html += '</' + listType + '>'; listType = null; } };
+  const openList = (t) => {
+    if (listType !== t) { closeList(); html += '<' + t + ' class="rb-list rb-' + t + '">'; listType = t; }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/\s+$/, '');
+    const trimmed = line.trim();
+    const indent = line.length - line.replace(/^\s+/, '').length;
+
+    if (!trimmed) { closeList(); continue; }
+
+    // Divider
+    if (/^[-=_*]{3,}$/.test(trimmed)) { closeList(); html += '<hr class="rb-div">'; continue; }
+
+    // Bullet
+    let m;
+    if ((m = trimmed.match(/^[-•*]\s+(.*)$/))) {
+      openList('ul');
+      html += '<li class="rb-li' + (indent >= 2 ? ' rb-li-sub' : '') + '">' + inlineFmt(m[1]) + '</li>';
+      continue;
+    }
+
+    // Numbered item (or numbered heading like "1. VALUE PROPOSITION")
+    if ((m = trimmed.match(/^(\d+)[.)]\s+(.*)$/))) {
+      const body = m[2];
+      if (isAllCaps(body)) {
+        closeList();
+        html += '<h4 class="rb-h">' + escHtml(body) + '</h4>';
+      } else {
+        openList('ol');
+        html += '<li class="rb-li">' + inlineFmt(body) + '</li>';
+      }
+      continue;
+    }
+
+    closeList();
+
+    // Key: value  (key is short, value present)
+    if ((m = trimmed.match(/^([A-Za-z][\w /&'-]{0,28}):\s+(\S.*)$/))) {
+      const sub = indent >= 2 ? ' rb-kv-sub' : '';
+      html += '<div class="rb-kv' + sub + '"><span class="rb-k">' + escHtml(m[1]) +
+              '</span><span class="rb-v">' + inlineFmt(m[2]) + '</span></div>';
+      continue;
+    }
+
+    // Key:  (label with empty value, e.g. "Fix:")
+    if ((m = trimmed.match(/^([A-Za-z][\w /&'-]{0,28}):\s*$/))) {
+      html += '<div class="rb-label">' + escHtml(m[1]) + '</div>';
+      continue;
+    }
+
+    // Major heading
+    if (isHeadingLine(trimmed)) {
+      html += '<h4 class="rb-h">' + escHtml(trimmed) + '</h4>';
+      continue;
+    }
+
+    // Short title-case line → sub-heading
+    if (trimmed.length <= 48 && /^[A-Z]/.test(trimmed) &&
+        !/[.,;:]$/.test(trimmed) && trimmed.split(/\s+/).length <= 7) {
+      html += '<div class="rb-sub">' + escHtml(trimmed) + '</div>';
+      continue;
+    }
+
+    // Paragraph
+    html += '<p class="rb-p">' + inlineFmt(trimmed) + '</p>';
+  }
+
+  closeList();
+  return html;
 }
 
 function showToast(msg, duration=3000) {
