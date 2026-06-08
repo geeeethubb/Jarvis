@@ -61,7 +61,7 @@ async def run_pipeline(job_id: str):
         _update_job(job_id, status="running", stage=1, stage_name="Scoring your idea", progress=5)
         score_result = await score_idea(idea, user_name)
 
-        if score_result["status"] == "FOLLOWUP":
+        if score_result["status"] == "FOLLOWUP" and not job.get("bypass_score"):
             _update_job(
                 job_id,
                 status="followup",

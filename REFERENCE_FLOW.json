@@ -1,0 +1,2546 @@
+{
+  "name": "IBC _ FINIAL FLOW",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: \"OK\",\n  reportId: $json.reportId,\n  reportCode: $json.reportId,\n  output: $json.output || '',\n  stage1: $json.stage1 || '',\n  stage2: $json.stage2 || '',\n  bmc: $json.bmc || '',\n  validation: $json.validation || '',\n  suggestions: $json.suggestions || '',\n  cofounder: $json.cofounder || '',\n  verdict: $json.verdict || '',\n  reason: $json.reason || '',\n  ideaScore: $('Parse Score').first().json.ideaScore || ''\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        15856,
+        4256
+      ],
+      "id": "e14f5cbd-37af-4926-9769-a562111514cc",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        12992,
+        4224
+      ],
+      "id": "6bd86e0f-01eb-4c47-9047-caaa5376fc61",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 800
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        13632,
+        4848
+      ],
+      "id": "3d0968a0-7998-42bc-82d9-ad1337ba507e",
+      "name": "Anthropic Chat Model Summary",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        14032,
+        4848
+      ],
+      "id": "ce6826fe-03f4-4c59-baff-019ee2591a6d",
+      "name": "Anthropic Chat Model CoFounder",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1DkBtJsdU9yI5ysnPzG6gyiFGwn9JhvL7KRL3gNICz1s",
+          "mode": "list",
+          "cachedResultName": "IBC",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DkBtJsdU9yI5ysnPzG6gyiFGwn9JhvL7KRL3gNICz1s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DkBtJsdU9yI5ysnPzG6gyiFGwn9JhvL7KRL3gNICz1s/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        14432,
+        4880
+      ],
+      "id": "fb9eee8a-3b33-431c-b028-3c9ed5f3874a",
+      "name": "Employee Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YXIOF9Gp4G9YJwdh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Scrapes a LinkedIn profile to get the founder's work history, skills and experience. Call this with the founder's LinkedIn URL.",
+        "url": "https://api.apify.com/v2/key-value-stores/WpTo2pRcYovKMmmnz/records/INPUT?token=apify_api_8DXBUfSfN95eihIf13bx6G754WYokT1HUpHt",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "apifyApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({startUrls: [{url: $fromAI('linkedin_url', 'The founder LinkedIn URL to scrape')}], maxResults: 1}) }}"
+      },
+      "id": "a5cbea23-c4aa-4d5f-8fd6-4b016864e6c6",
+      "name": "LinkedIn Scraper",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        14240,
+        4896
+      ],
+      "credentials": {
+        "apifyApi": {
+          "id": "dQNJzgUrD6mrqsFa",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ $input.all().map(item => item.json.output || item.json.text || '').filter(t => t.length > 0).join('\\n\\n---\\n\\n') }}",
+        "options": {
+          "systemMessage": "IMPORTANT: You are not Claude in a conversation. You are a summary tool. You receive reports as input and output one summary. Do not introduce yourself. Do not ask questions. Output the summary immediately and stop.\n\nYou will receive one or two reports — a Stage 1 market research report and a Stage 2 business validation report. Read both and output ONE single summary combining everything.\n\nOutput exactly this format:\n\nEVALUATION SUMMARY\nFounder: [extract from reports]\nEmployee ID: [extract from reports]\nIdea: [extract idea title]\n\nONE LINE SUMMARY\n[One sentence describing the idea and its core value]\n\nKEY FINDINGS\n- Market: [one line on market opportunity and size]\n- Validation: [overall score X/10 and verdict]\n- Strategic Fit: [score and one line]\n- Financial Viability: [score and one line]\n\nSKILL GAPS IDENTIFIED\n- Gap 1: [specific skill or capability missing]\n- Gap 2: [specific skill or capability missing]\n- Gap 3: [specific skill or capability missing]\n- Gap 4: [specific skill or capability missing]\n\nCRITICAL ISSUES\n1. [most critical issue in one line]\n2. [second critical issue in one line]\n\nVERDICT: [copy exact verdict from the validation report]\n\nStop here. Do not output anything else. Do not run again. This is your only output."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        13632,
+        4656
+      ],
+      "id": "d1cfecbc-a681-4faf-bb95-2a522d9962fa",
+      "name": "Summary Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "You are the Co-Founder Match Agent for KPMG's Innovation Incubator. You receive an evaluation summary that includes the founder's name and a list of skill gaps. Your job is to find the best 2 co-founder matches from the employee database.\n\nDo not ask questions. Do not wait. Process immediately.\n\nSTEP 1 — Read the Employee Database.\nCall Employee Database once. Read every row. Get all employees, their roles and skills.\n\nSTEP 2 — Match co-founders.\nBased on the skill gaps listed in the summary, find the 2 best employees whose skills directly fill those gaps. Do not pick the founder themselves.\n\nSTEP 3 — Output exactly this format and stop:\n\nCO-FOUNDER ANALYSIS\nFounder: [Name]\nIdea: [Title]\n\nSKILL GAPS TO FILL\n[list the gaps from the summary]\n\nCO-FOUNDER MATCH 1\nName: [from Employee Database]\nRole: [their job title]\nFit Score: [X/10]\nWhy they fit: [2 sentences on how their skills fill the gaps]\nKey skills they bring: [list 3-4 specific skills]\nGaps they fill: [which specific gaps from the list]\nRisk: [one line on what they still cannot cover]\n\nCO-FOUNDER MATCH 2\nName: [from Employee Database]\nRole: [their job title]\nFit Score: [X/10]\nWhy they fit: [2 sentences]\nKey skills they bring: [list 3-4 specific skills]\nGaps they fill: [which specific gaps]\nRisk: [one line on what they still cannot cover]\n\nRECOMMENDATION\n[One paragraph: which match is stronger and why. What the combined founding team would look like. What still needs to be addressed even with a co-founder.]\n\nStop here. Do not ask any questions. Do not add anything else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        14032,
+        4656
+      ],
+      "id": "7617beb2-4257-4878-8af1-655de0cfdd6d",
+      "name": "CO Founder Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst combined = items\n  .map(item => item.json.output || item.json.text || '')\n  .filter(t => t.length > 0)\n  .join('\\n\\n');\n\nreturn [{ json: { output: combined } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13344,
+        4464
+      ],
+      "id": "bc34394b-5c94-45d1-887a-184a708f8a84",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        14416,
+        4256
+      ],
+      "id": "803e8397-c627-4259-bde6-44e0020246e8",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet stage1Raw = '';\nlet stage2Raw = '';\nlet cofounderRaw = '';\n\n// Collect all string values from all items\nconst allStrings = [];\nitems.forEach(item => {\n  Object.values(item.json).forEach(val => {\n    if (typeof val === 'string' && val.length > 30) allStrings.push(val);\n  });\n});\n\n// Classify each string\nfor (const val of allStrings) {\n  const v = val.toLowerCase();\n  const hasCofounder = v.includes('co-founder analysis') || v.includes('co-founder match 1') || v.includes('cofounder match');\n  const hasStage2 = v.includes('stage 2 report') || v.includes('section 1') || v.includes('business model canvas') || v.includes('validation scorecard');\n  const hasStage1 = v.includes('stage 1 report') || (v.includes('market research') && v.includes('market sizing')) || (v.includes('market landscape') && v.includes('strategic fit'));\n\n  if (hasCofounder && !cofounderRaw) { cofounderRaw = val; }\n  else if (hasStage2 && !stage2Raw) { stage2Raw = val; }\n  else if (hasStage1 && !stage1Raw) { stage1Raw = val; }\n}\n\n// If stage2Raw not found separately, try to split from a combined output\nif (!stage2Raw && stage1Raw) {\n  const s2idx = stage1Raw.search(/STAGE 2 REPORT/i);\n  if (s2idx > 0) {\n    stage2Raw = stage1Raw.slice(s2idx);\n    stage1Raw = stage1Raw.slice(0, s2idx).trim();\n  }\n}\n\n// If still nothing, try the combined output field\nif (!stage1Raw && !stage2Raw) {\n  const combined = items.map(i => i.json.output || i.json.text || '').filter(Boolean).join('\\n\\n');\n  const s2idx = combined.search(/STAGE 2 REPORT/i);\n  if (s2idx > 0) {\n    stage1Raw = combined.slice(0, s2idx).trim();\n    stage2Raw = combined.slice(s2idx).trim();\n  } else {\n    stage1Raw = combined;\n  }\n}\n\nfunction cleanMarkdown(text) {\n  if (!text) return '';\n  return text\n    .replace(/\\*\\*(.+?)\\*\\*/gs, '$1')\n    .replace(/\\*(.+?)\\*/gs, '$1')\n    .replace(/#{1,6}\\s+/g, '')\n    .replace(/`{1,3}[^`]*`{1,3}/g, '')\n    .replace(/^\\s*[-*]\\s+/gm, '- ')\n    .trim();\n}\n\nstage1Raw    = cleanMarkdown(stage1Raw);\nstage2Raw    = cleanMarkdown(stage2Raw);\ncofounderRaw = cleanMarkdown(cofounderRaw);\n\nfunction extract(text, froms, tos) {\n  if (!text) return '';\n  if (typeof froms === 'string') froms = [froms];\n  const lo = text.toLowerCase();\n  let s = -1, ml = 0;\n  for (const f of froms) {\n    const i = lo.indexOf(f.toLowerCase());\n    if (i !== -1 && (s === -1 || i < s)) { s = i; ml = f.length; }\n  }\n  if (s === -1) return '';\n  let e = text.length;\n  (tos || []).forEach(t => {\n    const i = lo.indexOf(t.toLowerCase(), s + ml);\n    if (i !== -1 && i < e) e = i;\n  });\n  return text.slice(s + ml, e).trim();\n}\n\n// Extract sections from stage2 - try multiple header variants\nconst bmcMarkers   = ['section 1 \\u2014 business model canvas', 'section 1 - business model canvas', 'business model canvas\\n'];\nconst valMarkers   = ['section 2 \\u2014 validation scorecard', 'section 2 - validation scorecard', 'validation scorecard\\n'];\nconst sugMarkers   = ['section 3 \\u2014 improvement suggestions', 'section 3 - improvement suggestions', 'improvement suggestions\\n'];\nconst bmcEnd       = ['section 2', 'validation scorecard'];\nconst valEnd       = ['section 3', 'improvement suggestions'];\nconst sugEnd       = ['verdict:', 'stop here'];\n\nconst bmc        = cleanMarkdown(extract(stage2Raw, bmcMarkers, bmcEnd));\nconst validation = cleanMarkdown(extract(stage2Raw, valMarkers, valEnd));\nconst suggestions= cleanMarkdown(extract(stage2Raw, sugMarkers, sugEnd));\n\n// Fallback: if sections still empty, use the full stage2Raw for each\nconst verdictMatch = stage2Raw.match(/verdict[:\\s]+([^\\n]+)/i);\nconst reasonMatch  = stage2Raw.match(/reason[:\\s]+([^\\n]+)/i);\n\nreturn [{\n  json: {\n    output: stage1Raw + '\\n\\n' + stage2Raw + '\\n\\n' + cofounderRaw,\n    stage1: stage1Raw,\n    stage2: stage2Raw,\n    bmc: bmc || '',\n    validation: validation || '',\n    suggestions: suggestions || '',\n    cofounder: cofounderRaw || '',\n    verdict: verdictMatch ? verdictMatch[1].trim() : '',\n    reason: reasonMatch ? reasonMatch[1].trim() : '',\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14640,
+        4256
+      ],
+      "id": "1b4ec711-49a5-48bf-a93f-b618682a62d2",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-haiku-4-5-20251001",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        8832,
+        4384
+      ],
+      "id": "2e4f7094-f98e-414a-b9c3-e9f1143e47c1",
+      "name": "Anthropic Chat Model Scorer",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Founder Name: {{ $json.body.name }}\nEmployee ID: {{ $json.body.employeeId }}\nIdea: {{ $json.body.idea }}",
+        "options": {
+          "systemMessage": "You are an idea quality scorer for KPMG's Innovation Incubator. You receive a founder's idea and score it.\n\nIMPORTANT: If the input contains a section called \"This is a refined submission with detailed context:\" or \"Additional context provided:\" — treat the FULL submission as an enriched idea and score it based on ALL the content including the additional context. Do not score just the first sentence. Read everything before scoring.\n\nScore the idea from 1-10 based on:\n- Clarity: Is the problem and solution clearly defined?\n- Relevance: Does it relate to a real business or technology problem?\n- Feasibility: Is it realistically achievable?\n- Originality: Does it bring something new?\n\nOutput ONLY this JSON and nothing else:\n{\n  \"score\": [number 1-10],\n  \"reason\": \"[one sentence on why this score]\",\n  \"status\": \"[PASS or FOLLOWUP]\",\n  \"questions\": [\"[question 1]\", \"[question 2]\", \"[question 3]\"]\n}\n\nRules:\n- If score >= 5: set status to \"PASS\" and questions to []\n- If score < 5: set status to \"FOLLOWUP\" and provide exactly 3 specific questions that would help the founder strengthen their idea\n- The 3 questions must be specific to the submitted idea — not generic\n- A refined submission with detailed Q&A answers should almost always score >= 5\n- Output ONLY the JSON object. No preamble. No explanation. No markdown. No code blocks."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        8816,
+        4128
+      ],
+      "id": "9c035442-9472-4159-a0a3-86ba47893bd6",
+      "name": "Idea Scorer Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output || $input.first().json.text || '';\nlet parsed;\ntry {\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  parsed = match ? JSON.parse(match[0]) : {};\n} catch(e) {\n  parsed = { score: 5, status: 'PASS', reason: 'Could not parse score', questions: [] };\n}\n\nconst score = parsed.score || 5;\nconst status = parsed.status || (score >= 5 ? 'PASS' : 'FOLLOWUP');\n\n// Get the raw idea from webhook\nlet rawIdea = $('Main Webhook').first().json.body.idea || '';\n\n// If it's a refined submission, extract just the original idea + answers cleanly\nlet cleanIdea = rawIdea;\nif (rawIdea.includes('REFINED_SUBMISSION:')) {\n  // Extract the original idea\n  const origMatch = rawIdea.match(/Original idea:\\s*([\\s\\S]+?)$/i);\n  // Extract all Q&A answers\n  const answerMatches = [...rawIdea.matchAll(/A:\\s*([^\\n]+)/g)];\n  const answers = answerMatches.map(m => m[1].trim()).join('. ');\n  // Combine into a clean readable idea\n  if (origMatch) {\n    cleanIdea = origMatch[1].trim() + ' ' + answers;\n  } else {\n    cleanIdea = answers;\n  }\n}\n\nreturn [{\n  json: {\n    ...($input.first().json),\n    ideaScore: score,\n    ideaScoreReason: parsed.reason || '',\n    ideaStatus: status,\n    followupQuestions: parsed.questions || [],\n    founderName: $('Main Webhook').first().json.body.name,\n    employeeId: $('Main Webhook').first().json.body.employeeId,\n    linkedin: $('Main Webhook').first().json.body.linkedin || '',\n    idea: cleanIdea,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9152,
+        4176
+      ],
+      "id": "a0c2df43-311d-4dd7-bbec-48c894d7f21e",
+      "name": "Parse Score"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.ideaStatus }}",
+              "rightValue": "PASS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        9376,
+        4176
+      ],
+      "id": "1b3da263-3be6-4bf5-8c40-f78d1855311c",
+      "name": "Score Gate"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'FOLLOWUP', score: $json.ideaScore, reason: $json.ideaScoreReason, questions: $json.followupQuestions }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        9696,
+        4560
+      ],
+      "id": "a3741967-66dd-476c-b335-3d75e0a935b2",
+      "name": "Respond Followup"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "incubator",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        7776,
+        4064
+      ],
+      "id": "823f51f8-4f97-4842-b166-3445b41e7983",
+      "name": "Main Webhook",
+      "webhookId": "incubator-webhook-001"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "=1PlQRk_IQi0GRzWqJKDJDAQzlnAA8tQzNP6UpqmOo7LE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 966321745,
+          "mode": "list",
+          "cachedResultName": "storage",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PlQRk_IQi0GRzWqJKDJDAQzlnAA8tQzNP6UpqmOo7LE/edit#gid=966321745"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ideaScore",
+              "displayName": "ideaScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ideaScoreReason",
+              "displayName": "ideaScoreReason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ideaStatus",
+              "displayName": "ideaStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "followupQuestions",
+              "displayName": "followupQuestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "founderName",
+              "displayName": "founderName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employeeId",
+              "displayName": "employeeId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "linkedin",
+              "displayName": "linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        9696,
+        4288
+      ],
+      "id": "14ea58b2-7cc1-417f-8318-7650c9553e33",
+      "name": "Read Ideas Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YXIOF9Gp4G9YJwdh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const newIdea = ($('Parse Score').first().json.idea || '').toLowerCase();\nconst founderName = $('Parse Score').first().json.founderName || '';\nconst employeeId = $('Parse Score').first().json.employeeId || '';\nconst ideaScore = $('Parse Score').first().json.ideaScore || 0;\nconst linkedin = $('Parse Score').first().json.linkedin || '';\n\nconst allRows = $input.all().map(item => item.json);\n\nfunction similarity(a, b) {\n  const stopwords = new Set(['the','and','for','are','but','not','you','all','can','was','had','our','out','who','get','how','its','use','will','with','that','this','from','they','what','been','have','more','when','also','into','than','then','some','your','just','like','make','many','most','over','such','take','time','very','well','were','even','back','does','done','give','good','know','last','made','need','only','part','same','tell','used','want','ways','work','would','could','their','about','which','there','other','after','first','these','those','where','while','should']);\n  const wordsA = new Set(a.split(/\\W+/).filter(w => w.length > 3 && !stopwords.has(w)));\n  const wordsB = new Set(b.split(/\\W+/).filter(w => w.length > 3 && !stopwords.has(w)));\n  if (wordsA.size === 0 || wordsB.size === 0) return 0;\n  const intersection = [...wordsA].filter(w => wordsB.has(w)).length;\n  const union = new Set([...wordsA, ...wordsB]).size;\n  return Math.round((intersection / union) * 100);\n}\n\nlet highestScore = 0;\nlet matchedRow = null;\nconst allScores = [];\n\nfor (const row of allRows) {\n  if (String(row['Employee ID']).trim() === String(employeeId).trim()) continue;\n  const existingIdea = (row['Idea Description'] || '').toLowerCase();\n  if (!existingIdea) continue;\n  const score = similarity(newIdea, existingIdea);\n  allScores.push({ name: row['Name'], score });\n  if (score > highestScore) {\n    highestScore = score;\n    matchedRow = row;\n  }\n}\n\n// LOWER threshold to 40% to catch semantic matches\nconst THRESHOLD = 40;\n\nreturn [{\n  json: {\n    founderName,\n    employeeId,\n    ideaScore,\n    linkedin,\n    idea: $('Parse Score').first().json.idea || '',\n    followupQuestions: $('Parse Score').first().json.followupQuestions || [],\n    similarityScore: highestScore,\n    similarityStatus: highestScore >= THRESHOLD ? 'SIMILAR' : 'UNIQUE',\n    matchedFounder: matchedRow ? (matchedRow['Name'] || null) : null,\n    matchedEmployeeId: matchedRow ? (matchedRow['Employee ID'] || null) : null,\n    matchedIdea: matchedRow ? (matchedRow['Idea Description'] || null) : null,\n    debugScores: allScores,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10016,
+        4400
+      ],
+      "id": "f9b27605-3260-4e04-9189-df186d057333",
+      "name": "Check Similarity"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "sim-cond-001",
+              "leftValue": "={{ $json.similarityStatus }}",
+              "rightValue": "UNIQUE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        10336,
+        4400
+      ],
+      "id": "34b464e5-f3d8-4c38-a9ec-2f04bed6fda4",
+      "name": "Similarity Gate"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1PlQRk_IQi0GRzWqJKDJDAQzlnAA8tQzNP6UpqmOo7LE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Employee ID": "={{ $json.employeeId }}",
+            "Name": "={{ $json.founderName }}",
+            "Idea Title": "={{ $json.idea.substring(0, 80) }}",
+            "Idea Description": "={{ $json.idea }}",
+            "Score": "={{ $json.ideaScore }}",
+            "LinkedIn": "={{ $json.linkedin }}",
+            "Date Submitted": "={{ new Date().toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Employee ID",
+              "displayName": "Employee ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Idea Title",
+              "displayName": "Idea Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Idea Description",
+              "displayName": "Idea Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn",
+              "displayName": "LinkedIn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Submitted",
+              "displayName": "Date Submitted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        10656,
+        4272
+      ],
+      "id": "df40943f-e3c1-4b4d-8e4c-1523245df2ab",
+      "name": "Save Idea to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YXIOF9Gp4G9YJwdh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'SIMILAR', similarityScore: $json.similarityScore, matchedFounder: $json.matchedFounder, matchedEmployeeId: $json.matchedEmployeeId, matchedIdea: $json.matchedIdea }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        10656,
+        4544
+      ],
+      "id": "0abdbd89-d342-432f-a949-30c29468f8a2",
+      "name": "Respond Similar"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reports",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=employee_id=eq.{{ $json.body.employeeId }}"
+      },
+      "id": "b7a4da8d-73bc-474a-a807-d17a67aa3e2b",
+      "name": "Validate Employee",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        8288,
+        2992
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "login-cond-001",
+              "leftValue": "={{ $input.first().json.employee_id || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5cd22575-2c5c-4c8f-b3b5-35350c081fac",
+      "name": "Login Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        8496,
+        2992
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: \"ERROR\", message: \"Employee ID not found. Please check your ID and try again.\" }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "312e4184-b1a6-44c5-b67c-c117e9ddc8b8",
+      "name": "Respond Invalid Login",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        8688,
+        3104
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reports",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=employee_id=eq.{{ $json.employee_id }}&order=created_at.desc"
+      },
+      "id": "a283a99d-b563-43df-a2d1-1bb2a9fc2c88",
+      "name": "Fetch Past Reports",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        8688,
+        2880
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'OK',\n  employee: {\n    employeeId: $('Main Webhook').first().json.body.employeeId,\n    name: $('Validate Employee').first().json.name || $('Main Webhook').first().json.body.employeeId,\n    email: $('Validate Employee').first().json.email || ''\n  },\n  pastReports: $input.all()\n    .filter(r => r.json.report_id)\n    .map(r => ({\n      reportId: r.json.report_id,\n      reportCode: r.json.report_id,\n      ideaTitle: r.json.idea_title || 'Untitled',\n      verdict: r.json.verdict || '',\n      score: r.json.final_score || '',\n      stage1: r.json.stage1 || '',\n      stage2: r.json.stage2 || '',\n      bmc: r.json.bmc || '',\n      validation: r.json.validation || '',\n      suggestions: r.json.suggestions || '',\n      cofounder: r.json.cofounder || '',\n      createdAt: r.json.created_at || '',\n      prototypeRecommendation: r.json.prototype_recommendation || '',\n      improvementScore: r.json.improvement_score || '',\n      improvementDelta: r.json.improvement_delta || '',\n      improvementSummary: r.json.improvement_summary || '',\n      improvementAssessment: r.json.improvement_assessment || ''\n    }))\n}) }}",
+        "options": {}
+      },
+      "id": "ad836566-0179-4d75-abd4-fb8e7f6a434a",
+      "name": "Respond Login",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        8896,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "sessions",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.sessionId || ('SES-' + Date.now()) }}"
+            },
+            {
+              "fieldId": "employee_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.employeeId }}"
+            },
+            {
+              "fieldId": "started_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "e37b3205-7086-4795-af49-74a50930fb28",
+      "name": "Create Session",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        11152,
+        4000
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.sessionId || ('SES-' + Date.now()) }}"
+            },
+            {
+              "fieldId": "employee_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.employeeId }}"
+            },
+            {
+              "fieldId": "role",
+              "fieldValue": "user"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.idea }}"
+            },
+            {
+              "fieldId": "timestamp",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "1cf33d35-8213-4279-b303-7bc70c881f15",
+      "name": "Save User Message",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        10864,
+        3760
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\nlet id = 'RPT-';\nfor (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];\nreturn [{ json: { ...input, reportId: id, generatedAt: new Date().toISOString() } }];"
+      },
+      "id": "b5ee281d-ed19-4657-93a3-cf58761eda82",
+      "name": "Generate Report ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14928,
+        4256
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "reports",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "report_id",
+              "fieldValue": "={{ $json.reportId }}"
+            },
+            {
+              "fieldId": "employee_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.employeeId }}"
+            },
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.sessionId || '' }}"
+            },
+            {
+              "fieldId": "idea_title",
+              "fieldValue": "={{ ($json.stage1 || '').match(/Idea:\\s*([^\\n]+)/i)?.[1]?.trim() || 'Untitled' }}"
+            },
+            {
+              "fieldId": "stage1",
+              "fieldValue": "={{ $json.stage1 || '' }}"
+            },
+            {
+              "fieldId": "stage2",
+              "fieldValue": "={{ $json.stage2 || '' }}"
+            },
+            {
+              "fieldId": "cofounder",
+              "fieldValue": "={{ $json.cofounder || '' }}"
+            },
+            {
+              "fieldId": "bmc",
+              "fieldValue": "={{ $json.bmc || '' }}"
+            },
+            {
+              "fieldId": "validation",
+              "fieldValue": "={{ $json.validation || '' }}"
+            },
+            {
+              "fieldId": "suggestions",
+              "fieldValue": "={{ $json.suggestions || '' }}"
+            },
+            {
+              "fieldId": "final_score",
+              "fieldValue": "={{ $('Parse Score').first().json.ideaScore || '' }}"
+            },
+            {
+              "fieldId": "verdict",
+              "fieldValue": "={{ $json.verdict || '' }}"
+            },
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "905dcad7-04b1-4638-bddd-ad5869940004",
+      "name": "Save Report to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        15136,
+        4256
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.sessionId || '' }}"
+            },
+            {
+              "fieldId": "employee_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.employeeId }}"
+            },
+            {
+              "fieldId": "role",
+              "fieldValue": "assistant"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.output }}"
+            },
+            {
+              "fieldId": "timestamp",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "cfd35b3d-13b8-4972-ac61-66ad687dd75b",
+      "name": "Save Assistant Message",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        15344,
+        4256
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $('Generate Report ID').first().json;\nconst reportId = item.reportId || 'RPT-UNKNOWN';\nconst shareUrl = 'https://n8n.srv1365779.hstgr.cloud/webhook/incubator';\nreturn [{ json: {\n  ...item,\n  reportId,\n  shareUrl,\n  stage1: item.stage1 || '',\n  stage2: item.stage2 || '',\n  bmc: item.bmc || '',\n  validation: item.validation || '',\n  suggestions: item.suggestions || '',\n  cofounder: item.cofounder || '',\n  verdict: item.verdict || '',\n  reason: item.reason || '',\n  output: item.output || ''\n} }];"
+      },
+      "id": "5dac51dd-9f41-4210-a7bd-7835f0558c4f",
+      "name": "Attach Share URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15536,
+        4256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reports"
+      },
+      "id": "8900feb2-8ff4-48e3-b47d-b53848e51cbc",
+      "name": "Fetch Report",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        8768,
+        4640
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (!r || !r.report_id) {\n  return [{ json: { html: '<html><body style=\"font-family:sans-serif;padding:40px;text-align:center\"><h2>Report not found</h2><p>This link may have expired or the report ID is invalid.</p></body></html>' } }];\n}\nfunction section(title, content) {\n  if (!content || !content.trim()) return '';\n  const lines = content.split('\\n').map(l => {\n    l = l.trim(); if (!l) return '';\n    if (l.startsWith('- ')) return `<li>${l.slice(2)}</li>`;\n    const colonIdx = l.indexOf(':');\n    if (colonIdx > 0 && colonIdx < 40 && l === l.toUpperCase().slice(0, colonIdx) + l.slice(colonIdx))\n      return `<p><strong>${l.slice(0,colonIdx)}</strong>: ${l.slice(colonIdx+1).trim()}</p>`;\n    return `<p>${l}</p>`;\n  }).join('');\n  return `<div class=\"section\"><h2>${title}</h2><div class=\"body\">${lines}</div></div>`;\n}\nconst vc = (r.verdict||'').toUpperCase().includes('ADVANCE TO') ? '#16a34a' : (r.verdict||'').toUpperCase().includes('CONDITIONS') ? '#d97706' : '#dc2626';\nconst dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '';\nconst html = `<!DOCTYPE html><html lang=\"en\"><head>\n<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>KPMG Innovation Report – ${r.idea_title||'Idea'}</title>\n<style>\n*{box-sizing:border-box;margin:0;padding:0}\nbody{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a1a2e}\n.header{background:linear-gradient(135deg,#1a1a2e,#0047AB);color:#fff;padding:40px 24px 60px}\n.header-inner{max-width:820px;margin:0 auto}\n.badge{font-size:11px;font-weight:700;letter-spacing:3px;opacity:.65;margin-bottom:12px}\n.title{font-size:26px;font-weight:700;margin-bottom:6px}\n.meta{font-size:13px;opacity:.7}\n.verdict-card{max-width:820px;margin:-28px auto 0;background:#fff;border-radius:16px 16px 0 0;padding:20px 28px;display:flex;align-items:center;gap:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}\n.verdict-label{font-size:11px;color:#888;font-weight:600;letter-spacing:1px;margin-bottom:4px}\n.verdict-value{font-size:17px;font-weight:700;color:${vc}}\n.score{margin-left:auto;background:#f0f4f8;border-radius:99px;padding:8px 20px;font-weight:700;font-size:15px}\n.content{max-width:820px;margin:0 auto;padding:16px 24px 60px}\n.section{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.07)}\n.section h2{font-size:15px;font-weight:700;color:#0047AB;border-bottom:1px solid #e5e7eb;padding-bottom:10px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}\n.body{font-size:14px;line-height:1.65;color:#374151}\n.body p{margin-bottom:6px}\n.body li{margin-bottom:4px;padding-left:14px;position:relative}\n.body li::before{content:\"•\";position:absolute;left:0;color:#0047AB}\n.footer{text-align:center;color:#aaa;font-size:12px;margin-top:24px;padding-bottom:40px}\n</style></head><body>\n<div class=\"header\"><div class=\"header-inner\">\n  <div class=\"badge\">KPMG INNOVATION INCUBATOR</div>\n  <div class=\"title\">${r.idea_title||'Innovation Report'}</div>\n  <div class=\"meta\">Report ID: ${r.report_id}&nbsp;&nbsp;·&nbsp;&nbsp;${dateStr}</div>\n</div></div>\n<div style=\"max-width:820px;margin:0 auto\">\n  <div class=\"verdict-card\">\n    <div><div class=\"verdict-label\">FINAL VERDICT</div><div class=\"verdict-value\">${r.verdict||'Pending'}</div></div>\n    <div class=\"score\">Score: ${r.final_score||'—'}/10</div>\n  </div>\n</div>\n<div class=\"content\">\n  ${section('Stage 1 — Market Research', r.stage1)}\n  ${section('Business Model Canvas', r.bmc)}\n  ${section('Validation Scorecard', r.validation)}\n  ${section('Improvement Suggestions', r.suggestions)}\n  ${section('Co-Founder Matches', r.cofounder)}\n  <div class=\"footer\">Generated by KPMG Innovation Incubator · Confidential · Do not distribute externally</div>\n</div></body></html>`;\nreturn [{ json: { html, status: 'REPORT' } }];"
+      },
+      "id": "dcecc9a1-43e9-46c5-adc9-f1a910c24f12",
+      "name": "Render HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8976,
+        4640
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'REPORT',\n  reportId: $('Fetch Report').first().json.report_id,\n  ideaTitle: $('Fetch Report').first().json.idea_title || 'Untitled',\n  verdict: $('Fetch Report').first().json.verdict || '',\n  score: $('Fetch Report').first().json.final_score || '',\n  createdAt: $('Fetch Report').first().json.created_at || '',\n  stage1: $('Fetch Report').first().json.stage1 || '',\n  stage2: $('Fetch Report').first().json.stage2 || '',\n  bmc: $('Fetch Report').first().json.bmc || '',\n  validation: $('Fetch Report').first().json.validation || '',\n  suggestions: $('Fetch Report').first().json.suggestions || '',\n  cofounder: $('Fetch Report').first().json.cofounder || ''\n}) }}",
+        "options": {}
+      },
+      "id": "4235915a-a772-40ca-9025-b5e16b798b5f",
+      "name": "Respond HTML Report",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        9168,
+        4640
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "login",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "47107d07-585f-4148-866a-6ade0dba5df2",
+      "name": "Is Login?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        8064,
+        4144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "report",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cceed3f7-3ad1-4e9f-b9d8-25be30a8fbd7",
+      "name": "Is Report?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        8352,
+        4160
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        11088,
+        4480
+      ],
+      "id": "9f85843d-b901-4c8f-aafb-49cf34812846",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        11024,
+        4864
+      ],
+      "id": "fd87aa80-b214-4fbf-8447-dddfd6c564da",
+      "name": "Anthropic Chat Model8",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool once with the founder name, employee ID, LinkedIn and the structured idea. It runs market research, market sizing and strategic fit and returns the full Stage 1 report. Call once only.",
+        "text": "=={{ $fromAI('idea', 'The full founder details and structured idea to analyse') }}",
+        "options": {
+          "systemMessage": "You are Stage 1 coordinator. You have 3 tools: Market research1, Market size, Strategic fit. Call each tool exactly once passing the full idea text. Do not loop. Do not retry. Do not ask questions.\n\nReturn exactly this format and nothing else:\n\nSTAGE 1 REPORT\nFounder: [Name] | Employee ID: [ID]\nIdea: [Title]\n\nMarket Research\n[full result from Market research1 tool]\n\nMarket Sizing\n[full result from Market size tool]\n\nStrategic Fit\n[full result from Strategic fit tool]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        11328,
+        4784
+      ],
+      "id": "79cfcd95-1d41-44de-9529-54b826aeee4e",
+      "name": "Stage "
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Founder Name: {{ $json.founderName || $json.Name }}\nEmployee ID:{{ $json['Employee ID'] }}\nLinkedIn:{{ $json.LinkedIn }} \nIdea: {{ $json.idea || $json['Idea Description'] || $('Webhook1').first().json.body.idea }}",
+        "options": {
+          "systemMessage": "You are an innovation idea evaluator for KPMG. You receive a founder name, employee ID, LinkedIn and idea. Process immediately. Never ask questions. Never wait.\n\nSTEP 1 — Structure the idea into exactly this format:\nIdea Title: [short name]\nProblem Statement: [what problem and for whom]\nProposed Solution: [what it does]\nTarget Users: [who benefits]\nIndustry / Domain: [sector]\n\nSTEP 2 — You have one tool available. Call it immediately. Pass all of this to it:\n- Founder Name: [name]\n- Employee ID: [id]\n- LinkedIn: [linkedin]\n- Structured Idea: [full output from Step 1]\n\nDo not stop. Do not think. Do not ask anything. Call the tool right now.\n\nSTEP 3 — When the tool returns its Stage 1 report, output the full report exactly as returned. Do not summarise. Do not change anything. This full report will automatically be passed to Stage 2 for further analysis — so make sure you output the complete and unedited report. Stop immediately after outputting the report.\n\nNEVER ask questions. NEVER skip calling the tool. You have exactly one tool — call it once and output the full result."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        11360,
+        4256
+      ],
+      "id": "7dcd8b3e-fc7e-44c4-bcb5-496d9ce1232a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        11264,
+        5232
+      ],
+      "id": "27f711c0-2dcb-4421-aadd-360dc7f3a1ae",
+      "name": "Anthropic Chat Model1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        11552,
+        5408
+      ],
+      "id": "046856ed-39e5-471c-923c-720cb2c603dd",
+      "name": "Anthropic Chat Model2",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        11824,
+        4944
+      ],
+      "id": "dc24e321-fa9e-4952-b93f-09326ba79353",
+      "name": "Anthropic Chat Model3",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool with the idea text to get market landscape and competitor analysis.",
+        "text": "={{ $fromAI('idea', 'The full idea description to research') }}",
+        "options": {
+          "systemMessage": "You receive an idea description. Analyse the market and return exactly this format, nothing else:\n\nMARKET RESEARCH\nIdea: [Title]\n\nMarket Landscape\n[2-3 sentences on current state of this market]\n\nSimilar Solutions\n- [competitor 1]: [one line]\n- [competitor 2]: [one line]\n- [competitor 3]: [one line]\n\nIdea Strengths\n- [strength]\n- [strength]\n\nIdea Weaknesses\n- [weakness]\n- [weakness]\n\nMarket Trends\n[2 sentences on trends supporting or threatening this idea]\n\nStop here."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        11232,
+        5120
+      ],
+      "id": "4c8288fd-20ef-4fc6-aab7-ff502a2709ff",
+      "name": "Market research1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool with the idea text to get TAM, SAM, SOM and financial sizing.",
+        "text": "={{ $fromAI('idea', 'The full idea description to size') }}",
+        "options": {
+          "systemMessage": "You receive an idea description. Analyse the market size and return exactly this format, nothing else:\n\nMARKET SIZING\nIdea: [Title]\n\nIndustry Size\n[1 sentence on current global market size]\n\nTAM: [figure in USD] — [one line explanation]\nSAM: [figure in USD] — [one line explanation]\nSOM: [figure in USD] — [one line explanation]\n\nValue Creation\n[1-2 sentences on value this idea creates]\n\nRevenue Model\n- [model 1 + indicative price]\n- [model 2 + indicative price]\n\nStop here."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        11552,
+        5184
+      ],
+      "id": "b661814f-c0d4-4f1c-8447-363dad58f6b7",
+      "name": "Market size"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool with the idea text to get KPMG strategic fit assessment.",
+        "text": "={{ $fromAI('idea', 'The full idea description for strategic fit') }}",
+        "options": {
+          "systemMessage": "You receive an idea description. Assess KPMG strategic fit and return exactly this format, nothing else:\n\nSTRATEGIC FIT\nIdea: [Title]\n\nKPMG Alignment\n[2 sentences on how this fits KPMG strategy and service lines]\n\nInternal Capabilities\n[1 sentence on what KPMG already has to execute this]\n\nCapability Gaps\n[1 sentence on what is missing]\n\nKey Risks\n- [risk 1]\n- [risk 2]\n\nStrategic Fit Score: [X]/10\nJustification: [1 sentence]\n\nRecommendation: [1 sentence on whether KPMG should advance this]\n\nStop here."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        11808,
+        4640
+      ],
+      "id": "bcc588fc-9362-4585-8644-54ed2e5e4934",
+      "name": "Strategic fit"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        12304,
+        4672
+      ],
+      "id": "9a7c357a-2472-46c7-96e4-4a75a31408df",
+      "name": "Anthropic Chat Model S",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        12336,
+        5216
+      ],
+      "id": "c2b6f6f7-44c1-4fa1-8424-7ecc672a4c1c",
+      "name": "Anthropic Chat Model BMC",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        12704,
+        5136
+      ],
+      "id": "95e85c95-7178-4196-81d0-bfe992be419b",
+      "name": "Anthropic Chat Model Validation",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        13232,
+        5136
+      ],
+      "id": "9ebb01e5-32f6-4e82-8380-e8db86f861a6",
+      "name": "Anthropic Chat Model Suggestion",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool and pass the full Stage 1 report text. Returns a completed Business Model Canvas.",
+        "text": "={{ $fromAI('stage1report', 'The full Stage 1 research report') }}",
+        "options": {
+          "systemMessage": "You receive a Stage 1 report. Read it. Fill in the 9 BMC blocks using only what is in the report. No tools. No loops. Write once and stop.\n\nBUSINESS MODEL CANVAS\nIdea: [Title]\n\n1. VALUE PROPOSITION\n- [point]\n- [point]\n- [point]\n\n2. CUSTOMER SEGMENTS\n- [segment]: [one line]\n- [segment]: [one line]\n\n3. CHANNELS\n- [channel]\n- [channel]\n\n4. CUSTOMER RELATIONSHIPS\n- [one line]\n\n5. REVENUE STREAMS\n- [stream + price]\n- [stream + price]\n\n6. KEY RESOURCES\n- [resource]\n- [resource]\n\n7. KEY ACTIVITIES\n- [activity]\n- [activity]\n\n8. KEY PARTNERS\n- [partner]\n- [partner]\n\n9. COST STRUCTURE\nFixed: [item], [item]\nVariable: [item], [item]\n\nStop here. Do not write anything else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        12416,
+        4928
+      ],
+      "id": "deb74fc7-d7e0-47f6-bb81-378c4d76ca3a",
+      "name": "BMC Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool and pass the full Stage 1 report text. Returns a validation scorecard with scores out of 10.",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "options": {
+          "systemMessage": "IMPORTANT: You are not Claude in a conversation. You are a scoring tool. You receive a Stage 1 report as input and you output a scorecard. Nothing else. Do not introduce yourself. Do not ask questions. Do not explain your role. Just read the input and output the scorecard immediately.\n\nYou receive a Stage 1 report. Score the idea across 5 dimensions. Use only evidence from the report. Write once and stop.\n\nVALIDATION SCORECARD\nIdea: [Title] | Founder: [Name]\n\nMarket Validation: [X]/10 — [1 sentence]\nTechnical Feasibility: [X]/10 — [1 sentence]\nStrategic Alignment: [X]/10 — [1 sentence]\nFinancial Viability: [X]/10 — [1 sentence]\nRisk Level: [X]/10 — [1 sentence, 10=low risk]\n\nOverall: [X]/10 — [1 sentence]\nVerdict: [Not Ready / Conditionally Ready / Ready]\n\nStop here. Do not write anything else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        12688,
+        4848
+      ],
+      "id": "9adaf054-f91d-41c3-b136-43e6734e3358",
+      "name": "Validation Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool and pass the full Stage 1 report text. Returns prioritised improvement suggestions and a 30-day action plan.",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "options": {
+          "systemMessage": "IMPORTANT: You are not Claude in a conversation. You are a suggestion tool. You receive a Stage 1 report as input and output improvement suggestions. Do not introduce yourself. Do not ask questions. Just read the input and output the suggestions immediately.\n\nYou receive a Stage 1 report about a startup idea. Give brutally honest, deeply actionable feedback. Use names and numbers from the report. Every fix must include specific steps, who to involve, and a timeline.\n\nOutput exactly this format and nothing else:\n\nIMPROVEMENT SUGGESTIONS\nIdea: [Title] | Founder: [Name]\n\nCRITICAL — Fix before advancing\n1. Issue: [name]\n   Problem: [what is wrong in one sentence]\n   Why it matters: [consequence if not fixed]\n   Fix:\n   - [specific step 1]\n   - [specific step 2]\n   - [specific step 3]\n   Who to involve: [specific roles or teams]\n   Timeline: [when this must be done]\n\n2. Issue: [name]\n   Problem: [what is wrong in one sentence]\n   Why it matters: [consequence if not fixed]\n   Fix:\n   - [specific step 1]\n   - [specific step 2]\n   - [specific step 3]\n   Who to involve: [specific roles or teams]\n   Timeline: [when this must be done]\n\nIMPORTANT — Address in next stage\n1. Issue: [name]\n   Problem: [one sentence]\n   Fix:\n   - [specific step 1]\n   - [specific step 2]\n   Who to involve: [roles]\n   Timeline: [when]\n\n2. Issue: [name]\n   Problem: [one sentence]\n   Fix:\n   - [specific step 1]\n   - [specific step 2]\n   Who to involve: [roles]\n   Timeline: [when]\n\nMISSING FROM THIS IDEA\n- [gap 1]: [what needs to be added and why]\n- [gap 2]: [what needs to be added and why]\n- [gap 3]: [what needs to be added and why]\n\nTOP 3 ASSUMPTIONS TO VALIDATE\n1. Assumption: [state it]\n   Risk if wrong: [what happens]\n   Validate by: [specific cheap method — survey, interview, prototype test]\n   Cost to validate: [time and effort estimate]\n\n2. Assumption: [state it]\n   Risk if wrong: [what happens]\n   Validate by: [specific cheap method]\n   Cost to validate: [time and effort estimate]\n\n3. Assumption: [state it]\n   Risk if wrong: [what happens]\n   Validate by: [specific cheap method]\n   Cost to validate: [time and effort estimate]\n\n30-DAY ACTION PLAN\nWeek 1:\n1. [specific action with clear deliverable]\n2. [specific action with clear deliverable]\n\nWeek 2:\n3. [specific action with clear deliverable]\n4. [specific action with clear deliverable]\n\nWeek 3-4:\n5. [specific action with clear deliverable]\n6. [specific action with clear deliverable]\n\nStop here. Do not write anything else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        13280,
+        4992
+      ],
+      "id": "7f5e6de6-d19b-4bef-86df-94222052cfa0",
+      "name": "Suggestion Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "You are the Stage 2 Coordinator. You have exactly 3 tools: BMC Agent2, Validation Agent2, Suggestion Agent2.\n\nRULES:\n- Call each tool EXACTLY ONCE. Never call any tool twice.\n- Do not loop. Do not retry.\n- Follow the exact order below.\n\nThe input you received is the full Stage 1 report. Use it to call all 3 tools.\n\nSTEP 1 — Call BMC Agent2 once.\nPass the full input text as stage1report.\nWait for result. Save as BMC_RESULT.\n\nSTEP 2 — Call Validation Agent2 once.\nPass the full input text as stage1report.\nWait for result. Save as VALIDATION_RESULT.\n\nSTEP 3 — Call Suggestion Agent2 once.\nPass this combined text as stage1report:\n\n=== STAGE 1 REPORT ===\n[full input text you received]\n\n=== BUSINESS MODEL CANVAS ===\n[BMC_RESULT]\n\n=== VALIDATION SCORECARD ===\n[VALIDATION_RESULT]\n\nSTEP 4 — Output exactly this and STOP:\n\nSTAGE 2 REPORT\nFounder: [Name] | Employee ID: [ID]\nIdea: [Title]\n\nSECTION 1 — BUSINESS MODEL CANVAS\n[BMC_RESULT]\n\nSECTION 2 — VALIDATION SCORECARD\n[VALIDATION_RESULT]\n\nSECTION 3 — IMPROVEMENT SUGGESTIONS\n[Suggestion Agent2 result]\n\nVERDICT: [ADVANCE TO STAGE 3 / ADVANCE WITH CONDITIONS / DO NOT ADVANCE]\nReason: [1 sentence]\n\nSTOP. Do not call any tool again."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        12480,
+        4416
+      ],
+      "id": "d6b81000-d257-4b7a-9d31-cf41e822d633",
+      "name": "Stage 2 Super Agent"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "improve",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c4bff21b-a8ed-40de-9fff-0d0a9ba07f21",
+      "name": "Improvement Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        9184,
+        3568
+      ],
+      "webhookId": "32f42fd9-46ab-43e8-bab2-da7f0ddaa330"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "reports",
+        "returnAll": true
+      },
+      "id": "c803419c-4c0d-4b34-89a1-cc2819ba2de5",
+      "name": "Fetch Original Report",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        9408,
+        3568
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'ORIGINAL REPORT:\\n' + $('Fetch Original Report').first().json.stage1 + '\\n\\n' + $('Fetch Original Report').first().json.stage2 + '\\n\\nORIGINAL VERDICT: ' + $('Fetch Original Report').first().json.verdict + '\\nORIGINAL SCORE: ' + ($('Fetch Original Report').first().json.final_score || '?') + '/10\\n\\nFOUNDER IMPROVEMENTS SUBMITTED:\\n' + $('Main Webhook').first().json.body.improvements }}",
+        "options": {
+          "systemMessage": "You are an innovation progress evaluator at KPMG. You receive an original evaluation report and a founder's list of improvements they have made since the last evaluation.\n\nYour job is to:\n1. Assess how much the founder has improved based on the issues raised in the original report\n2. Give a new overall score out of 10\n3. Show the delta (improvement) vs original score\n4. Recommend the best next prototype type for their stage\n\nOUTPUT EXACTLY THIS FORMAT AND STOP:\n\nIMPROVEMENT ASSESSMENT\nIdea: [idea title from original report]\nFounder: [employee ID]\n\nPROGRESS SUMMARY\n[2-3 sentences on what the founder has addressed and what still needs work]\n\nSCORE PROGRESSION\nOriginal Score: [X]/10\nNew Score: [Y]/10\nDelta: [+/- Z points] — [IMPROVED / DECLINED / SAME]\n\nISSUES ADDRESSED\n- [issue from original]: [RESOLVED / PARTIALLY RESOLVED / NOT YET ADDRESSED] — [one line why]\n- [repeat for each critical/important issue from original report]\n\nREMAINING GAPS\n- [gap 1]: [what still needs to be done]\n- [gap 2]: [what still needs to be done]\n\nPROTOTYPE RECOMMENDATION\nRecommended: [Choose the most appropriate prototype type for this specific idea and stage — name it clearly]\n\nWhy this prototype:\n[2-3 sentences explaining why this prototype type fits their current stage, what it will prove, and who they should show it to]\n\nPrototype Goal: [one clear sentence — what question this prototype should answer]\nTimeline: [realistic timeline to build this prototype]\nWho to involve: [specific roles/teams]\n\nNEXT MILESTONE\n[One sentence on what the founder should achieve before their next check-in]\n\nSTOP."
+        }
+      },
+      "id": "d26293e6-5ee8-4c69-a1f2-6e3c3fd4865c",
+      "name": "Improvement Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        9664,
+        3552
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "improvements",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "report_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.reportId }}"
+            },
+            {
+              "fieldId": "employee_id",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.employeeId }}"
+            },
+            {
+              "fieldId": "improvements",
+              "fieldValue": "={{ $('Main Webhook').first().json.body.improvements }}"
+            },
+            {
+              "fieldId": "assessment",
+              "fieldValue": "={{ $('Improvement Agent').first().json.output }}"
+            }
+          ]
+        }
+      },
+      "id": "6b808819-9a29-4d4d-bf45-de1fd8784ad9",
+      "name": "Save Improvement to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        10016,
+        3632
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=={{ $json.assessment }}",
+        "options": {}
+      },
+      "id": "2fd02ee7-933a-4343-b7ad-5cb3f797af40",
+      "name": "Respond Improvement",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        10432,
+        3632
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "improve-cond-001",
+              "leftValue": "={{ $('Main Webhook').first().json.body.action }}",
+              "rightValue": "improve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4e41b96e-df19-4d92-af64-db0ce76d791c",
+      "name": "Is Improve?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        8528,
+        3696
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "improvements",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "=report_id=eq.{{ $('Main Webhook').first().json.body.reportId }}"
+      },
+      "id": "cef7edb8-0591-46b2-b65e-79732c254512",
+      "name": "Fetch Latest Improvement",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        9568,
+        3296
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "fetch-imp-cond-001",
+              "leftValue": "={{ $('Main Webhook').first().json.body.action }}",
+              "rightValue": "fetch_improvement",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7d59f8eb-171f-41f6-8bf0-5c09a0e90c49",
+      "name": "Is Fetch Improvement?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        8800,
+        3872
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "improvements",
+        "filterType": "string",
+        "filterString": "report_id=eq.{{ $('Main Webhook').first().json.body.reportId }}&order=created_at.desc&limit=1"
+      },
+      "id": "12c53bf7-bce9-4fcf-b627-84f285074f87",
+      "name": "Fetch Improvement Record",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        9056,
+        3840
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'OK', reportId: $('Main Webhook').first().json.body.reportId, assessment: $input.first().json.assessment || null, improvements: $input.first().json.improvements || null, createdAt: $input.first().json.created_at || null }) }}",
+        "options": {}
+      },
+      "id": "882303d7-c9e2-4c7d-9a0a-6c13494137d3",
+      "name": "Respond Fetch Improvement",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        9280,
+        3840
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const assessment = $('Improvement Agent').first().json.output || '';\nconst reportId = $('Main Webhook').first().json.body.reportId;\nconst employeeId = $('Main Webhook').first().json.body.employeeId;\n\n// Extract prototype recommendation\nconst protoMatch = assessment.match(/Recommended:\\s*([^\\n]+)/i);\nconst protoType = protoMatch ? protoMatch[1].trim() : '';\n\n// Extract new score\nconst newScoreMatch = assessment.match(/New Score:\\s*([0-9.]+)/i);\nconst newScore = newScoreMatch ? newScoreMatch[1].trim() : '';\n\n// Extract delta\nconst deltaMatch = assessment.match(/Delta:\\s*([^\\n]+)/i);\nconst delta = deltaMatch ? deltaMatch[1].trim() : '';\n\n// Extract progress summary\nconst summaryMatch = assessment.match(/PROGRESS SUMMARY\\n([\\s\\S]+?)(?=\\nSCORE|\\nISSUES|$)/i);\nconst summary = summaryMatch ? summaryMatch[1].trim() : '';\n\nreturn [{ json: {\n  reportId,\n  employeeId,\n  protoType,\n  newScore,\n  delta,\n  summary,\n  assessment\n}}];"
+      },
+      "id": "c1ce456a-d795-4355-a698-a1e714173aaf",
+      "name": "Extract Prototype",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9968,
+        3376
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "reports",
+        "filterType": "string",
+        "filterString": "report_id=eq.{{ $json.reportId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "proto_recommendation",
+              "fieldValue": "={{ $json.protoType }}"
+            },
+            {
+              "fieldId": "improvement_score",
+              "fieldValue": "={{ $json.newScore }}"
+            },
+            {
+              "fieldId": "improvement_delta",
+              "fieldValue": "={{ $json.delta }}"
+            },
+            {
+              "fieldId": "improvement_summary",
+              "fieldValue": "={{ $json.summary }}"
+            },
+            {
+              "fieldId": "improvement_assessment",
+              "fieldValue": "={{ $json.assessment }}"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "85d2bacd-6b11-44dd-aec7-aaef15092672",
+      "name": "Update Report with Prototype",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        10336,
+        3376
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "OTUs1NsjvGw74X6S",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        9536,
+        3760
+      ],
+      "id": "d5529ee2-b602-40e6-ad4d-fb16183e651a",
+      "name": "Anthropic Chat Model4",
+      "credentials": {
+        "anthropicApi": {
+          "id": "uyt3Z6LVGsLkSckk",
+          "name": "Anthropic Shared Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const assessment = $('Improvement Agent').first().json.output || '';\nconst reportId = $('Main Webhook').first().json.body.reportId;\n\nconst protoMatch = assessment.match(/Recommended:\\s*([^\\n]+)/i);\nconst protoType = protoMatch ? protoMatch[1].trim() : '';\n\nconst newScoreMatch = assessment.match(/New Score:\\s*([0-9.]+)/i);\nconst newScore = newScoreMatch ? newScoreMatch[1].trim() : '';\n\nconst deltaMatch = assessment.match(/Delta:\\s*([^\\n]+)/i);\nconst delta = deltaMatch ? deltaMatch[1].trim() : '';\n\nreturn [{ json: {\n  status: 'OK',\n  reportId,\n  assessment,\n  protoType,\n  newScore,\n  delta\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10224,
+        3632
+      ],
+      "id": "c484e7d3-8520-428e-a9e7-0b8f56739cba",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model Summary": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summary Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model CoFounder": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CO Founder Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Employee Database": {
+      "ai_tool": [
+        [
+          {
+            "node": "CO Founder Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Scraper": {
+      "ai_tool": [
+        [
+          {
+            "node": "CO Founder Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary Agent": {
+      "main": [
+        [
+          {
+            "node": "CO Founder Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CO Founder Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Summary Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Generate Report ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model Scorer": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Idea Scorer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idea Scorer Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Score": {
+      "main": [
+        [
+          {
+            "node": "Score Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Gate": {
+      "main": [
+        [
+          {
+            "node": "Read Ideas Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Followup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Login?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ideas Sheet": {
+      "main": [
+        [
+          {
+            "node": "Check Similarity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Similarity": {
+      "main": [
+        [
+          {
+            "node": "Similarity Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Similarity Gate": {
+      "main": [
+        [
+          {
+            "node": "Save Idea to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Similar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Idea to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Create Session",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save User Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Employee": {
+      "main": [
+        [
+          {
+            "node": "Login Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login Gate": {
+      "main": [
+        [
+          {
+            "node": "Fetch Past Reports",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Past Reports": {
+      "main": [
+        [
+          {
+            "node": "Respond Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report ID": {
+      "main": [
+        [
+          {
+            "node": "Attach Share URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Report to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Report to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Save Assistant Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Share URL": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Report": {
+      "main": [
+        [
+          {
+            "node": "Render HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Respond HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Login?": {
+      "main": [
+        [
+          {
+            "node": "Validate Employee",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Report?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Report?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Improve?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model8": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Stage ",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage ": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Stage 2 Super Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Market research1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Market size",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Strategic fit",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Market research1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Stage ",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Market size": {
+      "ai_tool": [
+        [
+          {
+            "node": "Stage ",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strategic fit": {
+      "ai_tool": [
+        [
+          {
+            "node": "Stage ",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model S": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Stage 2 Super Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model BMC": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "BMC Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model Validation": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Validation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model Suggestion": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Suggestion Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BMC Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Stage 2 Super Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Stage 2 Super Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suggestion Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Stage 2 Super Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stage 2 Super Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Improvement Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Original Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Original Report": {
+      "main": [
+        [
+          {
+            "node": "Improvement Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Latest Improvement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Improvement Agent": {
+      "main": [
+        [
+          {
+            "node": "Save Improvement to Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Prototype",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Improvement to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Improve?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Original Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Fetch Improvement?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Fetch Improvement?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Improvement Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Idea Scorer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Improvement Record": {
+      "main": [
+        [
+          {
+            "node": "Respond Fetch Improvement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Prototype": {
+      "main": [
+        [
+          {
+            "node": "Update Report with Prototype",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Improvement Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond Improvement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f93802f2-9aea-4ce0-8d6c-e87a5ef3c4c4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3e1220be459be1313685ff0e976601f464781a5258db5d3964709efeb2dd652b"
+  },
+  "id": "WTIFSLq7VoY14GQf",
+  "tags": []
+}

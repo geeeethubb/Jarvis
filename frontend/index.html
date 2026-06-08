@@ -200,6 +200,12 @@
   }
   .btn-gold:hover { background: var(--gold-dim); transform: translateY(-1px); }
 
+  .btn-ghost {
+    background: transparent; color: var(--text-faint);
+    font-weight: 600; letter-spacing: 0.3px;
+  }
+  .btn-ghost:hover { color: var(--text-dim); background: var(--bg3); }
+
   .submit-row {
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -530,6 +536,9 @@
         <button class="btn btn-secondary" onclick="showView('submit')">← Edit Idea</button>
         <button class="btn btn-primary" onclick="submitRefined()">⚡ Resubmit with Answers</button>
       </div>
+      <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="skipQuestions()">
+        Skip questions — go directly to analysis →
+      </button>
     </div>
 
     <!-- ════ VIEW: SIMILAR ════ -->
@@ -718,6 +727,33 @@ async function submitRefined() {
 
   try {
     const res = await fetch(API + '/api/submit/refined', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        original_idea: currentIdea,
+        answers,
+        questions: currentQuestions,
+        user_name: userName(),
+        user_id: userId()
+      })
+    });
+    const data = await res.json();
+    currentJobId = data.job_id;
+    showView('processing');
+    startPolling();
+  } catch (e) {
+    showToast('Error submitting. Please try again.');
+  }
+}
+
+// ─────────── SKIP QUESTIONS → GO DIRECTLY TO ANALYSIS ───────────
+async function skipQuestions() {
+  // Send along whatever partial answers the user did fill in.
+  const answers = Array.from(document.querySelectorAll('.question-answer'))
+    .map(t => t.value.trim());
+
+  try {
+    const res = await fetch(API + '/api/submit/skip', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({

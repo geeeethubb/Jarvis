@@ -56,6 +56,14 @@ class ProceedSimilarRequest(BaseModel):
     user_id: str = "default"
 
 
+class SkipQuestionsRequest(BaseModel):
+    original_idea: str
+    answers: list[str] = []
+    questions: list[str] = []
+    user_name: str = "Founder"
+    user_id: str = "default"
+
+
 # ─────────────────────── ROUTES ───────────────────────
 
 @app.get("/")
@@ -98,6 +106,38 @@ async def submit_refined(req: RefinedIdeaRequest, background_tasks: BackgroundTa
 
     job_id = str(uuid.uuid4())
     create_job(job_id, enriched_idea, req.user_name, req.user_id)
+    background_tasks.add_task(_run_pipeline_wrapper, job_id)
+    return {"status": "queued", "job_id": job_id}
+
+
+@app.post("/api/submit/skip")
+async def submit_skip_questions(req: SkipQuestionsRequest, background_tasks: BackgroundTasks):
+    """
+    User chose to skip the clarifying questions and go straight to analysis.
+    Carries along any partial answers they did provide, and bypasses the
+    score-gate so the pipeline proceeds regardless of the followup score.
+    """
+    from pipeline import _jobs
+
+    # Include only the questions the user actually answered (partial is fine).
+    qa_pairs = [
+        f"Q: {q}\nA: {a}"
+        for q, a in zip(req.questions, req.answers)
+        if a and a.strip()
+    ]
+    if qa_pairs:
+        idea = (
+            f"REFINED_SUBMISSION:\n"
+            f"Original idea: {req.original_idea}\n\n"
+            f"Additional context provided:\n" + "\n".join(qa_pairs)
+        )
+    else:
+        idea = req.original_idea
+
+    job_id = str(uuid.uuid4())
+    create_job(job_id, idea.strip(), req.user_name, req.user_id)
+    # Mark as bypass score so pipeline skips the FOLLOWUP gate in stage 1
+    _jobs[job_id]["bypass_score"] = True
     background_tasks.add_task(_run_pipeline_wrapper, job_id)
     return {"status": "queued", "job_id": job_id}
 
