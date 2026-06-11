@@ -172,6 +172,29 @@ def get_all_reports(user_id: str = "default") -> list:
     ]
 
 
+def delete_report(report_id: str, user_id: str = "default") -> bool:
+    """Delete a report from the vault. Returns True if a report was deleted."""
+    sb = get_supabase()
+    if sb:
+        res = (
+            sb.table("reports")
+            .delete()
+            .eq("report_id", report_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return bool(res.data)
+    reports = _load_json(REPORTS_FILE)
+    remaining = [
+        r for r in reports
+        if not (r.get("report_id") == report_id and r.get("user_id") == user_id)
+    ]
+    if len(remaining) == len(reports):
+        return False
+    _save_json(REPORTS_FILE, remaining)
+    return True
+
+
 def save_improvement(report_id: str, user_id: str, improvements: str, assessment: str):
     record = {
         "id": str(uuid.uuid4()),

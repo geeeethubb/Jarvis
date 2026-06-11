@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from config import CORS_ORIGINS
 from pipeline import run_pipeline, get_job, create_job
-from database import get_all_reports, get_report, save_improvement
+from database import get_all_reports, get_report, save_improvement, delete_report
 from agents.improvement import run_improvement_assessment
 
 app = FastAPI(
@@ -195,6 +195,14 @@ def fetch_report(report_id: str):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report
+
+
+@app.delete("/api/reports/{report_id}")
+def remove_report(report_id: str, user_id: str = "default"):
+    """Delete a report from the user's idea vault."""
+    if not delete_report(report_id, user_id):
+        raise HTTPException(status_code=404, detail="Report not found")
+    return {"status": "OK", "deleted": report_id}
 
 
 @app.post("/api/improve")

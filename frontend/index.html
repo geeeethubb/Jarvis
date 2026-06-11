@@ -483,9 +483,16 @@
     background: var(--bg2); border: 1px solid var(--border2);
     border-radius: var(--radius); padding: 18px 20px;
     cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; gap: 16px;
   }
+  .vault-card > div:first-child { flex: 1; min-width: 0; }
   .vault-card:hover { border-color: var(--border); background: var(--bg3); transform: translateX(2px); }
+  .vault-delete {
+    background: none; border: none; cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 6px; border-radius: 8px;
+    opacity: 0.45; transition: all 0.15s;
+  }
+  .vault-delete:hover { opacity: 1; background: var(--bg2); }
   .vault-card-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
   .vault-card-meta { font-size: 11px; color: var(--text-faint); }
   .vault-card-right { text-align: right; }
@@ -1073,6 +1080,8 @@ function renderVault(reports) {
           <div class="vault-score">${r.final_score || '—'}</div>
           <div class="vault-score-label">/ 10</div>
         </div>
+        <button class="vault-delete" title="Delete idea"
+          onclick="event.stopPropagation(); deleteIdea('${r.report_id}')">🗑</button>
       </div>`;
   }).join('');
 }
@@ -1085,6 +1094,18 @@ async function loadReportById(id) {
     showReport(report);
   } catch {
     showToast('Could not load report');
+  }
+}
+
+async function deleteIdea(id) {
+  if (!confirm('Delete this idea from your vault? This cannot be undone.')) return;
+  try {
+    const res = await fetch(API + '/api/reports/' + id + '?user_id=' + userId(), { method: 'DELETE' });
+    if (!res.ok) { showToast('Could not delete idea'); return; }
+    showToast('Idea deleted');
+    loadVault();
+  } catch {
+    showToast('Could not delete idea');
   }
 }
 
